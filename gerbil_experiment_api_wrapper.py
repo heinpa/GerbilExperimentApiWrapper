@@ -4,6 +4,11 @@ import time
 from bs4 import BeautifulSoup
 import validators
 
+
+# better selection of live/local model 
+# better more dynamic input options for init
+# more output
+
 class GerbilExperimentApiWrapper:
 
     file_upload_url = "http://gerbil-qa.cs.uni-paderborn.de:8080/gerbil/file/upload"
@@ -14,24 +19,46 @@ class GerbilExperimentApiWrapper:
     gold_standard_name = "GoldStandard"
     test_results_name = "TestResults"
 
+    live_annotator_prefix = "NIFWS"
     uploaded_dataset_prefix = "NIFDS"
     dataset_reference_prefix = "AFDS"
     anser_files_prefix = "AF"
 
+    upload_data_postfix = """experimentData={{"type":"QA","matching":"STRONG_ENTITY_MATCH","annotator":[{annotator}],"dataset":["{dataset}"],"answerFiles":[{answerFiles}],"questionLanguage":"{questionLanguage}"}}"""
 
-    def __init__(self, gold_standard_file, test_results_file, language):
-        self.gold_standard_file = gold_standard_file
-        self.test_results_file = test_results_file
-        self.language = language
 
+    def __init__(self, **kwargs):
+        # TODO: documentation!!!
+        # gold standard file and language always needs to be defined
+        self.gold_standard_file = kwargs.get('gold_standard_file')
+        self.test_results_file = kwargs.get('test_results_file')
+        self.live_annotator_name = kwargs.get('live_annotator_name')
+        self.live_annotator_url = kwargs.get('live_annotator_url')
+        self.language = kwargs.get('language')
+
+        # upload files / set live annotator (prefer local files)
         self.upload_file(self.gold_standard_file, self.gold_standard_name, 'application/json')
-        self.upload_file(self.test_results_file, self.test_results_name, 'application/json', self.gold_standard_file)
-        self.experiment_id = self.upload_experment_configuration()
+        
+        # setup with local files
+        if self.test_results_file:
+            self.use_live_annotator = False
+            self.upload_file(self.test_results_file, self.test_results_name, 'application/json', self.gold_standard_file)
 
+        # setup with live annotator
+        elif self.live_annotator_url:
+            self.use_live_annotator = True
+            self.set_live_annotator(self.live_annotator_name, self.live_annotator_url)
+        else:
+            raise Exception(f"Could not initialize GerbilBenchmarkService!"
+                            + "Missing results file or live annotator.")
+
+        # run experiment with set configuration
+        self.experiment_id = self.upload_experment_configuration()
         if self.result_url_valid(self.get_results_url()):
             print(f"initialized GerbilExperimentApiWrapper with experiment: {self.get_experiment_url}{self.experiment_id}")
         else:
-            raise Exception(f"could not initialize GerbilBenchmarkService")
+            raise Exception(f"Could not initialize GerbilBenchmarkService!"
+                            + "The experiment did not return valid results.")
         
 
     def result_url_valid(self, results_url):
@@ -40,14 +67,24 @@ class GerbilExperimentApiWrapper:
         else:
             return False
 
+
+    def set_live_annotator(self, name, url):
+        # TODO: validate url
+        self.annoator = f"{self.live_annotator_prefix}_{name}({url})"
+
         
     def upload_experment_configuration(self):
-        url_postfix = """experimentData={{"type":"QA","matching":"STRONG_ENTITY_MATCH","annotator":[],"dataset":["{dataset}"],"answerFiles":["{answerFiles}"],"questionLanguage":"{questionLanguage}"}}"""
-        execute_url = self.upload_configuration_url + url_postfix.format(
+
+        execute_url = self.upload_configuration_url + self.upload_data_postfix.format(
             dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_file})",
-            answerFiles = f"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_file})",
+            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_file})\"" 
+                if not self.use_live_annotator else "", 
+            annotator = f"\"{self.annoator}\"" if self.use_live_annotator else "",
             questionLanguage = self.language
         )
+
+        print(execute_url)
+
         cnt = 0
         while cnt < 5:
             try:
