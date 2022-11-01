@@ -6,7 +6,7 @@ import validators
 from pathlib import Path
 
 
-class GerbilExperimentApiWrapper:
+class Gerbil:
 
     file_upload_url = "http://gerbil-qa.cs.uni-paderborn.de:8080/gerbil/file/upload"
     upload_configuration_url = "http://gerbil-qa.aksw.org/gerbil/execute?"

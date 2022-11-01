@@ -1,4 +1,4 @@
-from gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper import GerbilExperimentApiWrapper
+from gerbil_api_wrapper.gerbil import Gerbil
 from unittest.mock import patch
 import pytest
 
@@ -15,12 +15,12 @@ live_annotator_name = "QAnswer"
 live_annotator_url = "http://porque.cs.upb.de:40123/qanswer/gerbil"
 
 
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.upload_experiment_configuration')
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.upload_file')
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.is_url_valid')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.upload_experiment_configuration')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.upload_file')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.is_url_valid')
 def test_initialize_wrapper_with_local_files(mock_upload_experiment_configuration, mock_upload_file, mock_is_url_valid):
     try:
-        wrapper = GerbilExperimentApiWrapper(
+        wrapper = Gerbil(
             gold_standard_file=gold_standard_file, language=language,
             test_results_file=test_results_file
         )
@@ -37,12 +37,12 @@ def test_initialize_wrapper_with_local_files(mock_upload_experiment_configuratio
         assert False
 
 
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.upload_experiment_configuration')
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.upload_file')
-@patch('gerbil_experiment_api_wrapper.gerbil_experiment_api_wrapper.GerbilExperimentApiWrapper.is_url_valid')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.upload_experiment_configuration')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.upload_file')
+@patch('gerbil_api_wrapper.gerbil.Gerbil.is_url_valid')
 def test_initialize_wrapper_with_live_annotator(mock_upload_experiment_configuration, mock_upload_file, mock_is_url_valid):
     try:
-        wrapper = GerbilExperimentApiWrapper(
+        wrapper = Gerbil(
             gold_standard_file=gold_standard_file, language=language,
             live_annotator_name=live_annotator_name,
             live_annotator_url=live_annotator_url
@@ -63,5 +63,5 @@ def test_initialize_wrapper_with_live_annotator(mock_upload_experiment_configura
 
 def test_initialization_without_files_or_annotator_fails():
     with pytest.raises(Exception):
-        GerbilExperimentApiWrapper(
+        Gerbil(
             gold_standard_file=gold_standard_file, language=language)

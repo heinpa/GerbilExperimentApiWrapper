@@ -19,8 +19,8 @@ def read_requirements():
 
 
 setuptools.setup(
-    name="gerbil-experiment-api-wrapper",
-    version="0.1.2",
+    name="gerbil-api-wrapper",
+    version="0.1.0",
     author="Paul Heinze",
     author_email="paul.heinze@student.hs-anhalt.de",
     description="A package that provides wrapper functionality for the Gerbil Benchmark Service",
@@ -31,6 +31,4 @@ setuptools.setup(
     python_requires='>=3.6',
     **read_requirements()
 )
-# TODO: specify classifiers 
-# TODO: how to determin python_requires?
 
