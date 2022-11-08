@@ -2,7 +2,7 @@
 
 This API wrapper is meant to automate the testing of QA results with a standardized process
 using [Gerbil for QA](http://gerbil-qa.aksw.org/gerbil/) 
-(see also https://scholar.google.com/scholar?cluster=17474642777307341861 and https://github.com/dice-group/gerbil).
+(see also [Paper](https://dl.acm.org/doi/pdf/10.1145/2736277.2741626) and [GitHub repository](https://github.com/dice-group/gerbil)).
 
 ## initialization
 
@@ -37,7 +37,7 @@ from gerbil_api_wrapper.gerbil import Gerbil
 wrapper = Gerbil(
     gold_standard_file="results_gold.json",
     live_annotator_name="QAnswer",
-    live_annotator_url="http://porque.cs.upb.de:40123/qanswer/gerbil",
+    live_annotator_url="http://qanswer-core1.univ-st-etienne.fr/api/gerbil",
     language="en")
 ```
 
