@@ -24,7 +24,7 @@ Running an expeiment with a local test results file:
 from gerbil_api_wrapper.gerbil import Gerbil
 
 wrapper = Gerbil(
-    gold_standar_file="results_gold.json",
+    gold_standard_file="results_gold.json",
     test_results_file="result_test.json",
     language="en")
 ```
