@@ -20,7 +20,7 @@ def read_requirements():
 
 setuptools.setup(
     name="gerbil-api-wrapper",
-    version="0.1.2",
+    version="1.0.0",
     author="Paul Heinze",
     author_email="paul.heinze@student.hs-anhalt.de",
     description="A package that provides wrapper functionality for the Gerbil Benchmark Service",

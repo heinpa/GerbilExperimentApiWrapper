@@ -30,8 +30,12 @@ class Gerbil:
         ---------
         gold_standard_file : str, required
             The path to a gold standard dataset
+        gold_standard_name : str, optional
+            The name of the gold standard dataset
         test_results_file : str, optional
             The path to a test result dataset to be used *instead* of a live annotator
+        test_results_name : str, optional
+            The name of the test results dataset
         live_annotator_name : str, optional
             The name of a live annotator to be used *instead* of local test results; 
             requires a value for 'live_annotator_url'
@@ -47,6 +51,9 @@ class Gerbil:
         self.test_results_file = kwargs.get('test_results_file')
         self.live_annotator_name = kwargs.get('live_annotator_name')
         self.live_annotator_url = kwargs.get('live_annotator_url')
+
+        self.gold_standard_name = kwargs.get('gold_standard_name', self.gold_standard_name)
+        self.test_results_name = kwargs.get('test_results_name', self.test_results_name)
 
         # upload files / set live annotator (prefer local files)
         self.upload_file(self.gold_standard_file, self.gold_standard_name, 'application/json')
