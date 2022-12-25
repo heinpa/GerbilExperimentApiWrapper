@@ -99,7 +99,7 @@ class Gerbil:
 
         execute_url = self.upload_configuration_url + self.upload_data_postfix.format(
             dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_file})",
-            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_file})\"" 
+            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_name})\"" 
                 if not self.use_live_annotator else "", 
             annotator = f"\"{self.annoator}\"" if self.use_live_annotator else "",
             questionLanguage = self.language
