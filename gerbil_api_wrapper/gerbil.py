@@ -4,14 +4,19 @@ import time
 from bs4 import BeautifulSoup
 import validators
 from pathlib import Path
+import logging
+
+
+logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
 
 class Gerbil:
 
-    file_upload_url = "http://gerbil-qa.cs.uni-paderborn.de:8080/gerbil/file/upload"
-    upload_configuration_url = "http://gerbil-qa.aksw.org/gerbil/execute?"
-    check_running_url = "http://gerbil-qa.aksw.org/gerbil/running"
-    get_experiment_url = "http://gerbil-qa.aksw.org/gerbil/experiment?id="
+    #file_upload_url = "http://gerbil-qa.cs.uni-paderborn.de:8080/gerbil/file/upload"
+    file_upload_url = "https://gerbil-qa.aksw.org/gerbil/file/upload"
+    upload_configuration_url = "https://gerbil-qa.aksw.org/gerbil/execute?"
+    check_running_url = "https://gerbil-qa.aksw.org/gerbil/running"
+    get_experiment_url = "https://gerbil-qa.aksw.org/gerbil/experiment?id="
 
     gold_standard_name = "GoldStandard"
     test_results_name = "TestResults"
@@ -74,7 +79,7 @@ class Gerbil:
         # run experiment with set configuration
         self.experiment_id = self.upload_experiment_configuration()
         if self.is_url_valid(self.get_results_url()):
-            print(f"initialized GerbilExperimentApiWrapper with experiment: {self.get_experiment_url}{self.experiment_id}")
+            logging.info(f"initialized GerbilExperimentApiWrapper with experiment: {self.get_experiment_url}{self.experiment_id}")
         else:
             raise Exception(f"Could not initialize GerbilBenchmarkService!"
                             + "The experiment did not return valid results.")
@@ -99,11 +104,13 @@ class Gerbil:
 
         execute_url = self.upload_configuration_url + self.upload_data_postfix.format(
             dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_file})",
-            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_name})\"" 
+            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_file})\"" 
                 if not self.use_live_annotator else "", 
             annotator = f"\"{self.annoator}\"" if self.use_live_annotator else "",
             questionLanguage = self.language
         )
+
+        logging.info(f"\nUpload experiment configuration: {execute_url}")
 
         cnt = 0
         while cnt < 5:
@@ -115,11 +122,11 @@ class Gerbil:
                     if response.status_code == 200:
                         return response.text # return the experiment id 
                 else:
-                    print("another experiment is running, waiting for 60 seconds ...")
+                    logging.info("another experiment is running, waiting for 60 seconds ...")
                     cnt += 1 
                     time.sleep(60)
             except:
-                print("request failed, retrying ...")
+                logging.info("request failed, retrying ...")
                 cnt += 1 
         raise Exception(f"could not complete request after {cnt} attempts")
 
@@ -165,8 +172,12 @@ class Gerbil:
             'multiselect': multiselect 
         }
         try:
+            logging.info(f"\nRequest to: {self.file_upload_url}\n" + \
+                         f"Data: {data}\n" + \
+                         f"Files: {files}")
             request = requests.post(self.file_upload_url, data=data, files=files)
             response = request.json()
+            logging.info(f"Got response: {response} ({request.status_code})")
             if request.status_code != 200:
                 raise Exception(f"file upload not successful: {request.status_code}: {request.content}")
             else: return response
