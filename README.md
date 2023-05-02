@@ -24,9 +24,12 @@ Running an expeiment with a local test results file:
 from gerbil_api_wrapper.gerbil import Gerbil
 
 wrapper = Gerbil(
-    gold_standard_file="results_gold.json",
-    test_results_file="result_test.json",
-    language="en")
+    gold_standard_file="original_data/qald_9_plus_test_dbpedia.json",
+    test_results_file="original_data/qald_9_plus_test_dbpedia-test.json",
+    test_results_name="MyTestResults",
+    gold_standard_name="MyGoldStandard",
+    language="de"
+)
 ```
 
 Running an experiment with a live annotator: 
