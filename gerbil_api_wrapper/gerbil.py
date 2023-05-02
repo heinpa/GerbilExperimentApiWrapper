@@ -24,10 +24,11 @@ class Gerbil:
     live_annotator_prefix = "NIFWS"
     uploaded_dataset_prefix = "NIFDS"
     dataset_reference_prefix = "AFDS"
-    anser_files_prefix = "AF"
+    answer_files_prefix = "AF"
 
     upload_data_postfix = """experimentData={{"type":"QA","matching":"STRONG_ENTITY_MATCH","annotator":[{annotator}],"dataset":["{dataset}"],"answerFiles":[{answerFiles}],"questionLanguage":"{questionLanguage}"}}"""
 
+    check_for_another_experiments = False
 
     def __init__(self, language, gold_standard_file, **kwargs):
         """
@@ -60,19 +61,21 @@ class Gerbil:
         self.gold_standard_name = kwargs.get('gold_standard_name', self.gold_standard_name)
         self.test_results_name = kwargs.get('test_results_name', self.test_results_name)
 
+        self.check_for_another_experiments = kwargs.get('check_for_another_experiments', self.check_for_another_experiments)
+
         # upload files / set live annotator (prefer local files)
         self.upload_file(self.gold_standard_file, self.gold_standard_name, 'application/json')
         
         # setup with local files
         if self.test_results_file:
             self.use_live_annotator = False
-            self.upload_file(self.test_results_file, self.test_results_name, 'application/json', self.gold_standard_file)
+            self.upload_file(self.test_results_file, self.test_results_name, 'application/json')
 
         # setup with live annotator
-        elif self.live_annotator_url:
+        if self.live_annotator_url:
             self.use_live_annotator = True
             self.set_live_annotator(self.live_annotator_name, self.live_annotator_url)
-        else:
+        elif not self.test_results_file and not self.live_annotator_url:
             raise Exception(f"Could not initialize GerbilBenchmarkService!"
                             + "Missing results file or live annotator.")
 
@@ -95,18 +98,17 @@ class Gerbil:
 
     def set_live_annotator(self, name, url):
         if self.is_url_valid(url):
-            self.annoator = f"{self.live_annotator_prefix}_{name}({url})"
+            self.annotator = f"{self.live_annotator_prefix}_{name}({url})"
         else: 
             raise Exception(f"Invalid annotator URL for annotator {name}: {url}")
 
         
     def upload_experiment_configuration(self):
-
         execute_url = self.upload_configuration_url + self.upload_data_postfix.format(
-            dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_file})",
-            answerFiles = f"\"{self.anser_files_prefix}_{self.test_results_name}({self.test_results_file})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_file})\"" 
+            dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_name})",
+            answerFiles = f"\"{self.answer_files_prefix}_{self.test_results_name}({self.test_results_name})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_name})\"" 
                 if not self.use_live_annotator else "", 
-            annotator = f"\"{self.annoator}\"" if self.use_live_annotator else "",
+            annotator = f"\"{self.annotator}\"" if self.use_live_annotator else "",
             questionLanguage = self.language
         )
 
@@ -116,7 +118,7 @@ class Gerbil:
         while cnt < 5:
             try:
                 # check that no other experiment is running
-                if requests.get(self.check_running_url).text == '':
+                if not self.check_for_another_experiments or requests.get(self.check_running_url).text == '':
                     # execute reauest with experiment configuration
                     response = requests.get(execute_url)
                     if response.status_code == 200:
@@ -160,12 +162,12 @@ class Gerbil:
             The path to the referenced gold standard file when uploading test results
         """
 
-        if len(file) > 100:
+        if len(name) > 100:
             raise Exception("File names must not exceed 100 characters!")
         # TODO: figure out how upload handles file paths
         # currently the server responds with 500, seeminly because it's out of space
         files = {
-            "file": (file, open(file, 'rb'), type)
+            "file": (name, open(file, 'rb'), type)
         }
         data = {
             'name': name,
