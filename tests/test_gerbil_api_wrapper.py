@@ -29,14 +29,13 @@ class TestWrapper(TestCase):
 
                 assert mocked_upload_file.call_count == 2
                 assert mocked_upload_file.call_args_list[0].args == (
-                    self.gold_standard_file, 
+                    self.gold_standard_file,
                     'GoldStandard',
                     'application/json')
                 assert mocked_upload_file.call_args_list[1].args == (
                     self.test_results_file,
                     'TestResults',
-                    'application/json',
-                    self.gold_standard_file)
+                    'application/json')
 
                 # assert values are stored in wrapper object
                 assert wrapper.gold_standard_file == self.gold_standard_file
@@ -65,7 +64,7 @@ class TestWrapper(TestCase):
 
                 assert mocked_upload_file.call_count == 1
                 assert mocked_upload_file.call_args_list[0].args == (
-                    self.gold_standard_file, 
+                    self.gold_standard_file,
                     'GoldStandard',
                     'application/json')
 

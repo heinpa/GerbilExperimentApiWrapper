@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import validators
 from pathlib import Path
 import logging
+from urllib.parse import urlparse
 
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
@@ -26,7 +27,7 @@ class Gerbil:
     dataset_reference_prefix = "AFDS"
     answer_files_prefix = "AF"
 
-    upload_data_postfix = """experimentData={{"type":"QA","matching":"STRONG_ENTITY_MATCH","annotator":[{annotator}],"dataset":["{dataset}"],"answerFiles":[{answerFiles}],"questionLanguage":"{questionLanguage}"}}"""
+    upload_data_template = """experimentData={{"type":"QA","matching":"STRONG_ENTITY_MATCH","annotator":[{annotator}],"dataset":["{dataset}"],"answerFiles":[{answerFiles}],"questionLanguage":"{questionLanguage}"}}"""
 
     check_for_another_experiments = False
 
@@ -65,7 +66,7 @@ class Gerbil:
 
         # upload files / set live annotator (prefer local files)
         self.upload_file(self.gold_standard_file, self.gold_standard_name, 'application/json')
-        
+
         # setup with local files
         if self.test_results_file:
             self.use_live_annotator = False
@@ -86,7 +87,7 @@ class Gerbil:
         else:
             raise Exception(f"Could not initialize GerbilBenchmarkService!"
                             + "The experiment did not return valid results.")
-        
+
 
     def is_url_valid(self, results_url):
         # basic validation of the result url
@@ -99,15 +100,15 @@ class Gerbil:
     def set_live_annotator(self, name, url):
         if self.is_url_valid(url):
             self.annotator = f"{self.live_annotator_prefix}_{name}({url})"
-        else: 
+        else:
             raise Exception(f"Invalid annotator URL for annotator {name}: {url}")
 
-        
+
     def upload_experiment_configuration(self):
-        execute_url = self.upload_configuration_url + self.upload_data_postfix.format(
+        execute_url = self.upload_configuration_url + self.upload_data_template.format(
             dataset = f"{self.uploaded_dataset_prefix}_{self.gold_standard_name}({self.gold_standard_name})",
-            answerFiles = f"\"{self.answer_files_prefix}_{self.test_results_name}({self.test_results_name})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_name})\"" 
-                if not self.use_live_annotator else "", 
+            answerFiles = f"\"{self.answer_files_prefix}_{self.test_results_name}({self.test_results_name})(undefined)({self.dataset_reference_prefix}_{self.gold_standard_name})\""
+                if not self.use_live_annotator else "",
             annotator = f"\"{self.annotator}\"" if self.use_live_annotator else "",
             questionLanguage = self.language
         )
@@ -125,11 +126,11 @@ class Gerbil:
                         return response.text # return the experiment id 
                 else:
                     logging.info("another experiment is running, waiting for 60 seconds ...")
-                    cnt += 1 
+                    cnt += 1
                     time.sleep(60)
             except:
                 logging.info("request failed, retrying ...")
-                cnt += 1 
+                cnt += 1
         raise Exception(f"could not complete request after {cnt} attempts")
 
 
@@ -145,15 +146,15 @@ class Gerbil:
             json.loads(x.string) for x in soup.find_all("script", type="application/ld+json")
         ]
         return data[0]
-        
 
-    def upload_file(self, file, name, type, multiselect=None):
+
+    def upload_file(self, file, name, type):
         """Upload gold starndard or test results file to be used in the experiment
 
         Parameters
         ----------
         file : str, required
-            The file path 
+            The file path
         name : str, required
             The name to be used in the experiment configuration
         type : str, required
@@ -170,8 +171,8 @@ class Gerbil:
             "file": (name, open(file, 'rb'), type)
         }
         data = {
-            'name': name,
-            'multiselect': multiselect 
+            'name': name
+            # 'multiselect': multiselect
         }
         try:
             logging.info(f"\nRequest to: {self.file_upload_url}\n" + \
@@ -179,6 +180,8 @@ class Gerbil:
                          f"Files: {files}")
             request = requests.post(self.file_upload_url, data=data, files=files)
             response = request.json()
+            # store the response, mainly for test purposes
+            # TODO: change? 
             logging.info(f"Got response: {response} ({request.status_code})")
             if request.status_code != 200:
                 raise Exception(f"file upload not successful: {request.status_code}: {request.content}")
